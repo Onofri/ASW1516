@@ -1,0 +1,49 @@
+#
+# Vagrantfile per un singolo nodo (node), con Apache2 e php 5.
+#
+ 
+VAGRANTFILE_API_VERSION = "2"
+ 
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+    # Configurazioni comuni.
+ 
+    # Ubuntu trusty 64 VirtualBox.
+    config.vm.box = "ubuntu/trusty64"
+    # config.vm.box_url = "http://files.vagrantup.com/ubuntu/trusty64.box"
+ 
+ 
+    # folder per le risorse condivise
+   
+    config.vm.synced_folder "www/", "/var/www/html", :mount_options => ["dmode=777", "fmode=777"]
+ 
+ 
+    #
+    # Configurazione del nodo "node", che prevede:
+    # - Apache con php5
+    #
+    config.vm.define "node1" do |node|
+        node.vm.hostname = "node1"
+        node.vm.network "private_network", ip: "10.11.1.201", virtualbox__intnet: true
+ 
+        node.vm.provider "virtualbox" do |v|
+            v.memory = 1024
+        end
+ 
+        node.vm.network "forwarded_port", guest: 22, host: 2221, id: 'ssh', auto_correct: true
+        node.vm.network "forwarded_port", guest: 5432, host: 5432, id: 'http', auto_correct: true
+        node.ssh.forward_agent = true
+
+
+    # node.vm.provision :shell, :inline => 'apt-get update'
+    # node.vm.provision :shell, :inline => 'apt-get -y install apache2'
+    # node.vm.provision :shell, :inline => 'apt-get -y install libapache2-mod-php5'
+    # node.vm.provision :shell, :inline => '/etc/init.d/apache2 restart'
+
+
+    config.vm.provision :puppet do |puppet|
+         puppet.manifests_path = "puppet/manifests"
+         puppet.manifest_file = "init.pp"
+         # puppet.module_path = "puppet/modules"
+	 end
+end
+end
